@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Seguimiento de Cursos</title>
   <style>
-    :root {
+    /* Tema Oscuro (por defecto) */
+    :root[data-theme="dark"] {
       --bg: #0f172a;
       --card-bg: #1e293b;
       --border: #334155;
@@ -16,6 +17,20 @@
       --completed-hover: #16a34a;
       --pending: #334155;
       --pending-hover: #475569;
+    }
+
+    /* Tema Claro */
+    :root[data-theme="light"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --primary: #0284c7;
+      --completed: #22c55e;
+      --completed-hover: #16a34a;
+      --pending: #e2e8f0;
+      --pending-hover: #cbd5e1;
     }
 
     * {
@@ -30,6 +45,7 @@
       color: var(--text);
       padding: 2rem 1rem;
       min-height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     .container {
@@ -43,6 +59,7 @@
       border-radius: 12px;
       padding: 1.5rem;
       margin-bottom: 2rem;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .top-bar {
@@ -52,6 +69,12 @@
       align-items: center;
       gap: 1rem;
       margin-bottom: 1.5rem;
+    }
+
+    .controls-right {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
     }
 
     select, button {
@@ -71,9 +94,13 @@
 
     .btn-primary {
       background: var(--primary);
-      color: #0f172a;
+      color: #ffffff;
       font-weight: 600;
       border: none;
+    }
+
+    :root[data-theme="dark"] .btn-primary {
+      color: #0f172a;
     }
 
     .btn-primary:hover {
@@ -101,7 +128,7 @@
     }
 
     .progress-bar-fill {
-      background: linear-gradient(90deg, #38bdf8, #22c55e);
+      background: linear-gradient(90deg, var(--primary), var(--completed));
       height: 100%;
       width: 0%;
       transition: width 0.3s ease;
@@ -125,8 +152,8 @@
       justify-content: center;
       background: var(--pending);
       color: var(--text);
-
       user-select: none;
+      transition: all 0.2s ease;
     }
 
     .lesson-btn:hover {
@@ -157,7 +184,6 @@
       width: 100%;
       height: 100%;
       background: rgba(0,0,0,0.7);
-      display: flex;
       align-items: center;
       justify-content: center;
       display: none;
@@ -216,7 +242,8 @@
         <div>
           <select id="courseSelect" onchange="switchCourse()"></select>
         </div>
-        <div>
+        <div class="controls-right">
+          <button id="themeToggle" onclick="toggleTheme()">☀️ Claro</button>
           <button class="btn-primary" onclick="openModal()">+ Nuevo Curso</button>
         </div>
       </div>
@@ -263,8 +290,8 @@
   <script>
     const STORAGE_KEY = 'tracker_courses_data';
     const ACTIVE_KEY = 'tracker_active_course';
+    const THEME_KEY = 'tracker_theme_preference';
 
-    // Datos iniciales si es la primera vez que abre la app
     const defaultData = {
       "sistemas-operativos": {
         id: "sistemas-operativos",
@@ -278,6 +305,8 @@
     let activeCourseId = "";
 
     function init() {
+      initTheme();
+
       const savedData = localStorage.getItem(STORAGE_KEY);
       if (savedData) {
         coursesData = JSON.parse(savedData);
@@ -295,6 +324,29 @@
 
       renderCourseSelect();
       renderApp();
+    }
+
+    /* Manejo del Tema Claro / Oscuro */
+    function initTheme() {
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeButtonLabel(savedTheme);
+    }
+
+    function toggleTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem(THEME_KEY, newTheme);
+      updateThemeButtonLabel(newTheme);
+    }
+
+    function updateThemeButtonLabel(theme) {
+      const btn = document.getElementById('themeToggle');
+      if (btn) {
+        btn.textContent = theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
+      }
     }
 
     function saveToStorage() {
@@ -326,7 +378,6 @@
       const course = coursesData[activeCourseId];
       if (!course) return;
 
-      // Renderizar grilla
       const grid = document.getElementById('lessonsGrid');
       grid.innerHTML = '';
 
@@ -343,7 +394,6 @@
         grid.appendChild(btn);
       }
 
-      // Actualizar estadísticas
       const total = course.total;
       const done = course.completed.length;
       const percentage = total > 0 ? Math.round((done / total) * 100) : 0;
@@ -387,7 +437,7 @@
         return;
       }
 
-      const id = nameInput.toLowerCase().replace(/[^a-z0-0]/g, '-') + '-' + Date.now();
+      const id = nameInput.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now();
       coursesData[id] = {
         id: id,
         name: nameInput,
