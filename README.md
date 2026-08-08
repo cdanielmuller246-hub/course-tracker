@@ -1,4 +1,5 @@
 # Course Tracker 📚
+https://cdanielmuller246-hub.github.io/course-tracker/
 
 Un rastreador de progreso de cursos minimalista, liviano y en un **único archivo HTML**. Diseñado para funcionar 100% offline y sin necesidad de servidores ni dependencias externas.
 
